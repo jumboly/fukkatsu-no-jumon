@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CRC_POLY } from '../core/checkcode';
 import type { PipelineSnapshot } from '../core/pipeline';
+import { CopyLinkButton } from './CopyLinkButton';
 import { bin, hex } from './format';
 
 /** DQ1 の 6502 ルーチン（S1 の逆アセンブル）。各行が step のどの段に当たるかを phase で持つ */
@@ -71,6 +72,7 @@ export function CheckExplorer(props: { snapshot: PipelineSnapshot; onBack: () =>
     <div className="explorer">
       <header className="explorer-head">
         <button type="button" className="button" onClick={props.onBack}>← メインビューに戻る</button>
+        <CopyLinkButton label="この画面の URL をコピー" />
         <h2 className="panel-title">CHECK CODE EXPLORER</h2>
         <span className="muted small">DQ1 が実際に行う手順（初期値 $0000・byte1→14・各 byte は MSB から・多項式 $1021・下位 8bit を採用）</span>
       </header>

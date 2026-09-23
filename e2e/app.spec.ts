@@ -69,6 +69,68 @@ test('Explorer に入って戻っても GameState と選択状態が保たれる
   expect(await passwordText(page)).toBe(pw);
 });
 
+test.describe('URL（hash）', () => {
+  const PW = 'ふるいけやかわずとびこむみずのおとばしや';
+  const urlPassword = (page: Page) => new URLSearchParams(new URL(page.url()).hash.split('?')[1] ?? '').get('p');
+
+  test('編集すると URL の呪文が追従する', async ({ page }) => {
+    await fieldRow(page, 'ゴーレム撃破').locator('.toggle').click();
+    await expect.poll(() => urlPassword(page)).toBe(await passwordText(page));
+  });
+
+  test('#/check?p= を直接開くとその呪文の Explorer が表示される', async ({ page }) => {
+    await page.goto(`./#/check?p=${encodeURIComponent(PW)}`);
+    await expect(page.getByRole('heading', { name: 'CHECK CODE EXPLORER' })).toBeVisible();
+    await page.getByRole('button', { name: '最後' }).click();
+    await expect(page.locator('.final')).toContainText('一致（有効）');
+    // 直接開いた場合も画面内の戻るでメインへ行け、呪文は保たれる
+    await page.getByRole('button', { name: '← メインビューに戻る' }).click();
+    await expect(page.locator('.pipeline')).toBeVisible();
+    expect(await passwordText(page)).toBe(PW);
+    expect(new URL(page.url()).hash).toMatch(/^#\/\?p=/);
+  });
+
+  test('ブラウザの戻る/進むで Explorer とメインを行き来できる', async ({ page }) => {
+    await fieldRow(page, 'ゴーレム撃破').locator('.toggle').click();
+    const pw = await passwordText(page);
+    await page.getByRole('button', { name: 'チェックコード計算を 1 step ずつ見る' }).click();
+    await expect(page).toHaveURL(/#\/check\?p=/);
+    await page.goBack();
+    await expect(page.locator('.pipeline')).toBeVisible();
+    expect(await passwordText(page)).toBe(pw);
+    await page.goForward();
+    await expect(page.getByRole('heading', { name: 'CHECK CODE EXPLORER' })).toBeVisible();
+    // 画面内の戻るも履歴を積まずに消費する（積むと「戻る」で Explorer に再入してしまう）
+    const len = await page.evaluate(() => history.length);
+    await page.getByRole('button', { name: '← メインビューに戻る' }).click();
+    await expect(page.locator('.pipeline')).toBeVisible();
+    expect(await page.evaluate(() => history.length)).toBe(len);
+    expect(await passwordText(page)).toBe(pw);
+  });
+
+  test('アドレスバーで呪文を書き換えると読み込まれる', async ({ page }) => {
+    await page.evaluate((pw) => { window.location.hash = `#/?p=${encodeURIComponent(pw)}`; }, PW);
+    await expect.poll(() => passwordText(page)).toBe(PW);
+    await expect(page.locator('.pw-status')).toContainText('呪文から decode');
+  });
+
+  test('壊れた呪文の URL は既定状態で開き、URL も正しい呪文に直る', async ({ page }) => {
+    await page.goto('./');
+    const def = await passwordText(page);
+    await page.goto('./#/?p=abc');
+    await page.reload();
+    expect(await passwordText(page)).toBe(def);
+    await expect.poll(() => urlPassword(page)).toBe(def);
+  });
+
+  test('URL をコピーできる', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.getByRole('button', { name: 'この呪文の URL をコピー' }).click();
+    await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(page.url());
+  });
+});
+
 test.describe('レイアウト', () => {
   test('1600px 幅でパイプラインが横にはみ出さない', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 1000 });
