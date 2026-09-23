@@ -2,7 +2,7 @@
 // UI 側で「どれとどれが繋がるか」を推測させないため、FIELD_LAYOUT と各工程の定義からここで機械的に作る。
 
 import { deriveStats } from './growth';
-import { BIT_OWNERS, BYTE_COUNT, CHECK_BYTE, FIELD_LAYOUT, FIELD_GROUPS, GROUP_COUNT, type Category, type FieldId } from './layout';
+import { BYTE_COUNT, FIELD_LAYOUT, FIELD_GROUPS, GROUP_COUNT, type Category, type FieldId } from './layout';
 import { CHECK_INPUT_FIRST, CHECK_INPUT_LAST } from './checkcode';
 import type { PipelineSnapshot } from './pipeline';
 
@@ -26,7 +26,6 @@ export interface TraceEdge {
 }
 
 export interface TraceGraph {
-  nodes: ReadonlySet<string>;
   edges: readonly TraceEdge[];
   out: ReadonlyMap<string, readonly TraceEdge[]>;
   in: ReadonlyMap<string, readonly TraceEdge[]>;
@@ -49,24 +48,9 @@ export function kindOf(id: string): NodeKind {
   return id.slice(0, id.indexOf(':')) as NodeKind;
 }
 
-/** 表示列。変更伝播アニメーションの遅延や「左→右」の順序付けに使う */
-export function columnOf(id: string): number {
-  switch (kindOf(id)) {
-    case 'field': case 'derived': case 'cat': return 0;
-    case 'lbit': return 1;
-    case 'pbit': case 'byte': return 2;
-    case 'rbit': case 'raw': return 3;
-    case 'enc': return 4;
-    case 'char': return 5;
-  }
-}
-
 function build(): TraceGraph {
-  const nodes = new Set<string>();
   const edges: TraceEdge[] = [];
   const add = (from: string, to: string, kind: EdgeKind) => {
-    nodes.add(from);
-    nodes.add(to);
     edges.push({ id: `${from}>${to}`, from, to, kind });
   };
 
@@ -98,7 +82,7 @@ function build(): TraceGraph {
     (out.get(e.from) ?? out.set(e.from, []).get(e.from)!).push(e);
     (inn.get(e.to) ?? inn.set(e.to, []).get(e.to)!).push(e);
   }
-  return { nodes, edges, out, in: inn };
+  return { edges, out, in: inn };
 }
 
 export const TRACE_GRAPH: TraceGraph = build();
@@ -225,11 +209,3 @@ export function diffSnapshots(prev: PipelineSnapshot | null, cur: PipelineSnapsh
   const edges = new Set(g.edges.filter((e) => nodes.has(e.from) && nodes.has(e.to)).map((e) => e.id));
   return { nodes, edges };
 }
-
-/** stream bit k の持ち主（Overview のツールチップ等で使う） */
-export function ownerOfBit(k: number) {
-  return BIT_OWNERS[k]!;
-}
-
-export const CHECK_NODE = nodeId.field('check');
-export const CHECK_BYTE_NODE = nodeId.byte(CHECK_BYTE);

@@ -195,7 +195,7 @@ export function App() {
         />
 
         <footer className="app-foot muted small">
-          仕様の根拠と資料間の差異は docs/research.md を参照。参照実装 taotao54321/dq1-password（GPL-3.0）はテストオラクルとしてのみ使用し、コードは含みません。
+          仕様の根拠と資料間の差異は <a href="https://github.com/jumboly/fukkatsu-no-jumon/blob/main/docs/research.md">docs/research.md</a> を参照。参照実装 taotao54321/dq1-password（GPL-3.0）はテストオラクルとしてのみ使用し、コードは含みません。
           『ドラゴンクエスト』は株式会社スクウェア・エニックスの登録商標です。本ツールは非公式の学習用資料です。
         </footer>
         <Inspector snapshot={snap} />

@@ -1,4 +1,4 @@
-import { createContext, useContext, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { createContext, useContext, type KeyboardEvent, type ReactNode } from 'react';
 import type { Diff, Relation } from '../core/trace';
 
 export interface TraceUi {
@@ -67,10 +67,10 @@ export function traceProps(t: TraceUi, id: string, extraClass = '', tabbable = t
   };
 }
 
-export function TraceNode(props: { id: string; className?: string; title?: string; children?: ReactNode; style?: CSSProperties; tabbable?: boolean }) {
+export function TraceNode(props: { id: string; className?: string; title?: string; children?: ReactNode; tabbable?: boolean }) {
   const t = useTrace();
   return (
-    <span {...traceProps(t, props.id, props.className, props.tabbable ?? true)} title={props.title} style={props.style}>
+    <span {...traceProps(t, props.id, props.className, props.tabbable ?? true)} title={props.title}>
       {props.children}
     </span>
   );

@@ -2,7 +2,7 @@
 // 汎用 CRC ライブラリではなく、6502 ルーチンの手順（hi XOR data の bit7 で分岐）をそのまま再現する。
 // 結果は CRC-16/XMODEM と同値だが、Explorer で実機の手順を見せるためにこの形を保つ。
 
-import { BYTE_COUNT, CHECK_BYTE } from './layout';
+import { BYTE_COUNT } from './layout';
 
 export const CRC_POLY = 0x1021;
 export const CRC_INIT = 0x0000;
@@ -68,10 +68,4 @@ export function computeCheckCode(bytes: readonly number[]): CheckCodeResult {
     }
   }
   return { crc16: crc, code: crc & 0xff, steps };
-}
-
-export function withCheckCode(bytes: readonly number[]): number[] {
-  const out = [...bytes];
-  out[CHECK_BYTE] = computeCheckCode(bytes).code;
-  return out;
 }

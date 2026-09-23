@@ -245,7 +245,7 @@ function PackColumn({ snapshot: s }: { snapshot: PipelineSnapshot }) {
                     <TraceNode
                       key={k}
                       id={nodeId.pbit(k)}
-              tabbable={false}
+                      tabbable={false}
                       className={`bit cat-${f.category} v${s.streamBits[k]} ${boundary ? 'seg-start' : ''}`}
                       title={`byte${i} bit${k & 7}（stream bit ${k}）= ${f.label} の bit${o.logicalBit}`}
                     >
@@ -296,7 +296,7 @@ function RawColumn({ snapshot: s }: { snapshot: PipelineSnapshot }) {
                 <TraceNode
                   key={j}
                   id={nodeId.rbit(n, j)}
-              tabbable={false}
+                  tabbable={false}
                   className={`bit cat-${f.category} v${(s.raw6[n]! >> j) & 1}`}
                   title={`raw6[${n}] bit${j} ← byte${k >> 3} bit${k & 7}（${f.label}）`}
                 >
