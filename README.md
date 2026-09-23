@@ -18,10 +18,11 @@ FC版『ドラゴンクエスト』の「復活の呪文」が、ゲーム状態
 npm install
 npm run dev        # 開発サーバ
 npm test           # テスト（vitest）
+npm run test:e2e   # UI の E2E（Playwright。初回は npx playwright install chromium）
 npm run build      # dist/ に静的ファイルを出力（相対パスなので任意のサブパスに置ける）
 ```
 
-main ブランチへ push すると `.github/workflows/deploy.yml` がテスト → ビルド → GitHub Pages 公開を行います
+main ブランチへ push すると `.github/workflows/deploy.yml` がテスト → ビルド → E2E → GitHub Pages 公開を行います
 （リポジトリの Settings → Pages → Source を「GitHub Actions」にしておく）。
 
 ## 構成
@@ -33,6 +34,7 @@ main ブランチへ push すると `.github/workflows/deploy.yml` がテスト 
 | `src/core/` | UI から独立した変換パイプライン（encode / decode / チェックコード / TraceGraph）。bit 配置は `layout.ts` の `FIELD_LAYOUT` だけが定義し、他はすべてそこから導く |
 | `src/ui/` | React による可視化。bit 演算や依存関係の推測は持たず、core の結果と TraceGraph を表示するだけ |
 | `tests/` | layout / checkcode / password（既知呪文・オラクル比較・round trip・境界値）/ trace / 名前と成長 |
+| `e2e/` | ビルド済みの UI に対する Playwright テスト（経路の強調・編集・decode・Explorer 往復・レスポンシブ） |
 | `scripts/gen-oracle-vectors.mjs` | 参照実装からテストベクターを生成 |
 
 ### bit 順の約束

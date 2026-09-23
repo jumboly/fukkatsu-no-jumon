@@ -2,11 +2,12 @@
 // UI 側で「どれとどれが繋がるか」を推測させないため、FIELD_LAYOUT と各工程の定義からここで機械的に作る。
 
 import { deriveStats } from './growth';
-import { BIT_OWNERS, BYTE_COUNT, CHECK_BYTE, FIELD_LAYOUT, FIELD_GROUPS, GROUP_COUNT, type FieldId } from './layout';
+import { BIT_OWNERS, BYTE_COUNT, CHECK_BYTE, FIELD_LAYOUT, FIELD_GROUPS, GROUP_COUNT, type Category, type FieldId } from './layout';
 import { CHECK_INPUT_FIRST, CHECK_INPUT_LAST } from './checkcode';
 import type { PipelineSnapshot } from './pipeline';
 
-export type NodeKind = 'field' | 'lbit' | 'pbit' | 'byte' | 'rbit' | 'raw' | 'enc' | 'char' | 'derived';
+/** cat はグラフ上の実ノードではなく、Overview の凡例から「カテゴリ内の全フィールド」を指すための仮想 ID */
+export type NodeKind = 'field' | 'lbit' | 'pbit' | 'byte' | 'rbit' | 'raw' | 'enc' | 'char' | 'derived' | 'cat';
 
 /**
  * - data:    値そのものがそのまま流れる（bit の移動、6bit のまとまり、文字化）
@@ -41,6 +42,7 @@ export const nodeId = {
   enc: (n: number) => `enc:${n}`,
   char: (n: number) => `char:${n}`,
   derived: (d: 'level' | 'growth' | 'stats') => `derived:${d}`,
+  cat: (c: Category) => `cat:${c}`,
 };
 
 export function kindOf(id: string): NodeKind {
@@ -50,7 +52,7 @@ export function kindOf(id: string): NodeKind {
 /** 表示列。変更伝播アニメーションの遅延や「左→右」の順序付けに使う */
 export function columnOf(id: string): number {
   switch (kindOf(id)) {
-    case 'field': case 'derived': return 0;
+    case 'field': case 'derived': case 'cat': return 0;
     case 'lbit': return 1;
     case 'pbit': case 'byte': return 2;
     case 'rbit': case 'raw': return 3;
@@ -130,6 +132,7 @@ export interface Relation {
 
 /** 選択ノードの上流・下流をまとめて返す。byte / raw のような集合ノードは中の bit の下流も含める */
 export function relate(id: string, g: TraceGraph = TRACE_GRAPH): Relation {
+  if (kindOf(id) === 'cat') return relateCategory(id.slice(4) as Category, g);
   const members = (g.in.get(id) ?? []).filter((e) => e.kind === 'member').map((e) => e.from);
   const seeds = [id, ...members];
   const up = walk(g, [id], 'up', DIRECT_KINDS);
@@ -156,6 +159,26 @@ export function relate(id: string, g: TraceGraph = TRACE_GRAPH): Relation {
     }
   }
   return { nodes, edges, indirectNodes, indirectEdges };
+}
+
+/**
+ * カテゴリに属する全フィールドの関連の和。
+ * グラフにカテゴリノードを足すと、フィールドを指したときに上流としてカテゴリまで光ってしまうので、合成で済ませる。
+ * 別フィールド経由で direct になったノードは、間接側から除いて二重に数えないようにする。
+ */
+function relateCategory(c: Category, g: TraceGraph): Relation {
+  const r: Relation = { nodes: new Set(), edges: new Set(), indirectNodes: new Set(), indirectEdges: new Set() };
+  for (const f of FIELD_LAYOUT) {
+    if (f.category !== c) continue;
+    const x = relate(nodeId.field(f.id), g);
+    x.nodes.forEach((n) => r.nodes.add(n));
+    x.edges.forEach((e) => r.edges.add(e));
+    x.indirectNodes.forEach((n) => r.indirectNodes.add(n));
+    x.indirectEdges.forEach((e) => r.indirectEdges.add(e));
+  }
+  r.nodes.forEach((n) => r.indirectNodes.delete(n));
+  r.edges.forEach((e) => r.indirectEdges.delete(e));
+  return r;
 }
 
 // ---- 値と差分 ----

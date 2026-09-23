@@ -136,9 +136,9 @@ export function Overview({ snapshot: s }: { snapshot: PipelineSnapshot }) {
       </div>
       <div className="legend">
         {CATEGORIES.map((c) => (
-          <span key={c} className={`legend-item cat-${c}`}>
+          <TraceNode key={c} id={nodeId.cat(c)} className={`legend-item cat-${c}`} title={`${CATEGORY_LABELS[c]} の bit だけを強調（クリックで固定）`}>
             <span className="swatch" /> {CATEGORY_LABELS[c]} <span className="muted">{counts.get(c) ?? 0}</span>
-          </span>
+          </TraceNode>
         ))}
       </div>
     </section>
@@ -223,6 +223,8 @@ function fieldValueText(s: PipelineSnapshot, id: FieldId): string {
 export function Inspector({ snapshot: s }: { snapshot: PipelineSnapshot }) {
   const t = useTrace();
   const id = t.focus;
+  // スマホでは下部固定のまま全文を出すと画面を大きく塞ぐので、既定は 2 行に畳み、読みたいときだけ広げる
+  const [expanded, setExpanded] = useState(false);
   let body: ReactNode = <span className="muted">項目にカーソルを合わせる／クリックで固定すると、関係する経路だけが光ります。もう一度クリックで解除。</span>;
   if (id) {
     const parts = id.split(':');
@@ -273,6 +275,12 @@ export function Inspector({ snapshot: s }: { snapshot: PipelineSnapshot }) {
         body = <>{n + 1} 文字目「{s.chars[n]}」 ← encoded {s.enc6[n]}（{bin(s.enc6[n]!, 6)}） ← raw {s.raw6[n]}（{bin(s.raw6[n]!, 6)}）。raw の出所: stream bit {6 * n}〜{6 * n + 5}</>;
         break;
       }
+      case 'cat': {
+        const c = parts[1] as Category;
+        const n = BIT_OWNERS.filter((o) => fieldDef(o.field).category === c).length;
+        body = <>カテゴリ <b>{CATEGORY_LABELS[c]}</b>: {n} bit。所属フィールドの bit と、それが入る byte・6bit 値・文字を強調。</>;
+        break;
+      }
       case 'derived':
         body = parts[1] === 'level' ? <>レベルは EXP {s.state.exp} から経験値表で決まる（呪文には無い）</>
           : parts[1] === 'growth' ? <>成長タイプは名前 4 文字から決まる（呪文には無い）</>
@@ -281,9 +289,23 @@ export function Inspector({ snapshot: s }: { snapshot: PipelineSnapshot }) {
     }
   }
   return (
-    <div className="inspector" role="status" aria-live="polite">
-      {t.selected && <span className="tag sel">固定中</span>}
-      <span className="inspector-body">{body}</span>
+    <div className={`inspector ${expanded ? 'is-expanded' : ''}`} role="status" aria-live="polite">
+      {t.selected && (
+        // 固定を解除するために元の項目までスクロールして戻らなくて済むよう、ここから外せるようにする
+        <button type="button" className="tag sel inspector-unpin" onClick={() => t.toggleSelect(t.selected!)} title="固定を解除" aria-label="固定を解除">
+          固定中 ×
+        </button>
+      )}
+      <span id="inspector-body" className="inspector-body">{body}</span>
+      <button
+        type="button"
+        className="link-button inspector-toggle"
+        aria-expanded={expanded}
+        aria-controls="inspector-body"
+        onClick={() => setExpanded((x) => !x)}
+      >
+        {expanded ? '畳む ▼' : '全文 ▲'}
+      </button>
       <span className="inspector-legend small">
         <span className="lg lg-related">関連</span>
         <span className="lg lg-indirect">間接（check・連鎖）</span>

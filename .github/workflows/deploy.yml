@@ -28,6 +28,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # 公開するビルドそのものに対して UI の E2E を走らせる（落ちたら公開しない）
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

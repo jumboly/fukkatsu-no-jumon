@@ -122,7 +122,7 @@ option.unused { color: var(--ng); }
 .ov-cell.byte-start::before { content: ''; position: absolute; left: -1px; top: -5px; height: 4px; border-left: 2px solid var(--muted); }
 .ov-cell.group-start::after { content: ''; position: absolute; left: -1px; bottom: -5px; height: 4px; border-left: 2px solid var(--text); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; }
-.legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.legend-item { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 4px; }
 .swatch { width: 12px; height: 12px; border-radius: 2px; background: var(--c); display: inline-block; }
 
 /* ---------- パイプライン ---------- */
@@ -245,6 +245,21 @@ option.unused { color: var(--ng); }
 }
 .inspector-body { flex: 1; min-width: 240px; }
 .inspector-legend { display: flex; gap: 10px; }
+/* 狭い画面では本文を 2 行に畳み、凡例は展開時だけ出す */
+.inspector-toggle { display: none; }
+.inspector-unpin { cursor: pointer; border: 0; font: inherit; }
+@media (max-width: 700px) {
+  .inspector { flex-wrap: nowrap; align-items: flex-start; padding: 6px 12px; gap: 8px; font-size: 13px; }
+  .inspector-body { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+  .inspector-legend { display: none; }
+  .inspector-toggle { display: inline; flex: none; white-space: nowrap; }
+  .inspector-unpin { flex: none; white-space: nowrap; }
+  .inspector.is-expanded { flex-wrap: wrap; max-height: 50vh; overflow-y: auto; }
+  .inspector.is-expanded .inspector-body { display: block; -webkit-line-clamp: unset; line-clamp: none; flex-basis: 100%; order: 1; }
+  .inspector.is-expanded .inspector-legend { display: flex; order: 2; }
+  /* 畳んだインスペクタの高さ分だけ空ければ、フッターまで読める */
+  .app { padding-bottom: 64px; }
+}
 .lg::before { content: ''; display: inline-block; width: 14px; height: 0; margin-right: 4px; vertical-align: middle; border-top: 2px solid; }
 .lg-related::before { border-color: var(--related); }
 .lg-indirect::before { border-color: var(--cat-check); border-top-style: dashed; }

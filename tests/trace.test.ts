@@ -57,6 +57,23 @@ describe('TraceGraph', () => {
     expect(r.nodes.has(nodeId.raw(11))).toBe(true);
     expect(r.nodes.has(nodeId.raw(12))).toBe(false);
   });
+
+  it('カテゴリ（凡例）を指すと、そのカテゴリの bit だけが関連になる', () => {
+    const r = relate(nodeId.cat('equip'));
+    // 装備 = byte8 の 8bit（stream bit 64..71）
+    const bits = [...r.nodes].filter((n) => n.startsWith('pbit:')).map((n) => Number(n.slice(5))).sort((a, b) => a - b);
+    expect(bits).toEqual([64, 65, 66, 67, 68, 69, 70, 71]);
+    for (const f of ['weapon', 'armor', 'shield'] as const) expect(r.nodes.has(nodeId.field(f))).toBe(true);
+    expect(r.nodes.has(nodeId.field('exp'))).toBe(false);
+    // direct と indirect は重ならない
+    for (const n of r.nodes) expect(r.indirectNodes.has(n), n).toBe(false);
+  });
+
+  it('離れた位置にあるカテゴリ（名前）も全 bit が関連になる', () => {
+    const r = relate(nodeId.cat('name'));
+    expect([...r.nodes].filter((n) => n.startsWith('pbit:'))).toHaveLength(24);
+    expect(r.nodes.has(nodeId.derived('growth'))).toBe(true);
+  });
 });
 
 describe('diff', () => {
