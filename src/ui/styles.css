@@ -1,0 +1,312 @@
+/* 色はトークンにまとめ、カテゴリ色・状態色を一箇所で調整できるようにする */
+:root {
+  --bg: #07070c;
+  --panel: #10111a;
+  --panel-2: #171927;
+  --line: #2a2d42;
+  --text: #eceef6;
+  --muted: #8d92ab;
+  --window-border: #f4f4f4;
+
+  --cat-name: #5eb3ff;
+  --cat-exp: #7ee787;
+  --cat-gold: #f2cc60;
+  --cat-equip: #ff8b6b;
+  --cat-items: #c297ff;
+  --cat-herbkey: #45d6c6;
+  --cat-flags: #ff7eb6;
+  --cat-pattern: #aab3c5;
+  --cat-check: #ffa24a;
+
+  --focus: #ffffff;
+  --related: #ffe066;
+  --changed: #ff5d5d;
+  --ok: #6be38c;
+  --ng: #ff6b6b;
+
+  --font-dq: 'DotGothic16', 'M PLUS 1 Code', system-ui, sans-serif;
+  --font-mono: 'M PLUS 1 Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --bit: 18px;
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font-family: var(--font-mono); font-size: 14px; line-height: 1.5; }
+button, input, select { font: inherit; color: inherit; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.cat-name { --c: var(--cat-name); }
+.cat-exp { --c: var(--cat-exp); }
+.cat-gold { --c: var(--cat-gold); }
+.cat-equip { --c: var(--cat-equip); }
+.cat-items { --c: var(--cat-items); }
+.cat-herbkey { --c: var(--cat-herbkey); }
+.cat-flags { --c: var(--cat-flags); }
+.cat-pattern { --c: var(--cat-pattern); }
+.cat-check { --c: var(--cat-check); }
+
+/* ---------- レイアウト ---------- */
+.app { max-width: 1680px; margin: 0 auto; padding: 16px 16px 88px; }
+.app-head { margin-bottom: 12px; }
+.app-title { font-family: var(--font-dq); font-weight: 400; font-size: 26px; margin: 0; letter-spacing: 0.04em; }
+.app-lead { margin: 4px 0 0; color: var(--muted); }
+.app-foot { margin-top: 24px; }
+
+.top-grid { display: grid; grid-template-columns: minmax(300px, 1.1fr) minmax(280px, 1fr) minmax(280px, 0.9fr); gap: 12px; align-items: start; }
+@media (max-width: 1100px) { .top-grid { grid-template-columns: 1fr 1fr; } .controls { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .top-grid { grid-template-columns: 1fr; } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.panel-title { font-family: var(--font-dq); font-weight: 400; font-size: 17px; margin: 0 0 8px; letter-spacing: 0.06em; }
+.sub-title { font-size: 14px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+/* FC 版のウィンドウ（黒地に白い角丸枠）を連想させる程度にとどめ、可読性を優先する */
+.dq-window { background: #000; border: 3px solid var(--window-border); border-radius: 10px; box-shadow: 0 0 0 3px #000; }
+
+.button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.button:hover { border-color: var(--muted); }
+.link-button { background: none; border: none; color: var(--cat-check); cursor: pointer; padding: 0; text-decoration: underline; }
+.select, .text-input, .num-input { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+.num-input { width: 96px; }
+.field-editor .select { max-width: 150px; }
+.text-input { flex: 1; min-width: 0; }
+option.unused { color: var(--ng); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); margin-left: 4px; white-space: nowrap; }
+.tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.tag.warn { color: var(--cat-gold); border-color: color-mix(in srgb, var(--cat-gold) 50%, transparent); }
+.tag.sel { color: #000; background: var(--related); border-color: var(--related); }
+
+.controls { display: flex; flex-direction: column; gap: 10px; }
+.control { display: flex; flex-direction: column; gap: 4px; }
+.control.checkbox { flex-direction: row; align-items: center; gap: 6px; }
+
+/* ---------- 呪文エディタ ---------- */
+.pw-lines { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.pw-line { display: flex; gap: 4px; }
+.pw-cell { width: 34px; height: 38px; font-size: 22px; background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-family: var(--font-dq); }
+.pw-cell:hover { border-color: var(--muted); }
+.pw-status { font-weight: 600; }
+.pw-status.ok { color: var(--ok); }
+.pw-status.ng { color: var(--ng); }
+.issues { margin: 4px 0; padding-left: 18px; color: var(--ng); font-size: 12px; }
+.pw-form { display: flex; gap: 6px; margin-top: 8px; }
+.form-error { color: var(--ng); font-size: 12px; margin-top: 4px; }
+
+/* ---------- 導出ステータス ---------- */
+.derived-grid { display: flex; flex-direction: column; gap: 6px; }
+.derived-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 4px 6px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; }
+.derived-item .k { color: var(--muted); }
+.derived-item .v { font-size: 18px; font-family: var(--font-dq); min-width: 2.5ch; }
+.derived-item .calc { flex-basis: 100%; color: var(--muted); }
+.derived-item.stats { display: grid; grid-template-columns: auto auto auto; justify-content: start; align-items: center; gap: 2px 10px; }
+
+/* ---------- パターン ---------- */
+.patterns summary { cursor: pointer; }
+.pattern-list { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 2px; }
+.pattern-item { background: none; border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; cursor: pointer; text-align: left; width: 100%; }
+.pattern-item.current { border-color: var(--related); }
+
+/* ---------- 120bit Overview ---------- */
+.overview-head { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.overview-head .panel-title { margin: 0; }
+.overview-head .stat b { color: var(--ok); }
+.overview-strip { display: grid; grid-template-columns: repeat(60, 1fr); gap: 2px 1px; margin: 12px 0 4px; }
+@media (max-width: 900px) { .overview-strip { grid-template-columns: repeat(30, 1fr); } }
+.ov-cell { height: 20px; border-radius: 2px; background: color-mix(in srgb, var(--c) 22%, transparent); cursor: pointer; position: relative; }
+.ov-cell.v1 { background: var(--c); }
+.ov-cell.byte-start::before { content: ''; position: absolute; left: -1px; top: -5px; height: 4px; border-left: 2px solid var(--muted); }
+.ov-cell.group-start::after { content: ''; position: absolute; left: -1px; bottom: -5px; height: 4px; border-left: 2px solid var(--text); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; }
+.legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.swatch { width: 12px; height: 12px; border-radius: 2px; background: var(--c); display: inline-block; }
+
+/* ---------- パイプライン ---------- */
+/* 横方向のデータフローが本質なので、狭い画面では列を崩さず横スクロールさせる */
+.pipeline-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.pipeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: max-content max-content max-content max-content max-content;
+  grid-template-rows: auto 1fr;
+  column-gap: 52px;
+  padding: 12px 12px 24px;
+  min-width: max-content;
+}
+.col-head { grid-row: 1; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 8px; position: relative; z-index: 1; }
+.col-head-0 { grid-column: 1; }
+.col-head-1 { grid-column: 1; justify-self: end; text-align: right; }
+.col-head-2 { grid-column: 2; }
+.col-head-3 { grid-column: 3; }
+.col-head-4 { grid-column: 4; }
+.col-head-5 { grid-column: 5; }
+.col-title { font-family: var(--font-dq); letter-spacing: 0.08em; }
+.col-sub { font-size: 11px; color: var(--muted); }
+.col { grid-row: 2; position: relative; z-index: 1; }
+.col-fields { grid-column: 1; }
+.col-pack, .col-raw, .col-enc, .col-char { display: flex; flex-direction: column; justify-content: space-around; }
+.col-pack { grid-column: 2; }
+.col-raw { grid-column: 3; }
+.col-enc { grid-column: 4; }
+.col-char { grid-column: 5; }
+
+.wires { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 0; overflow: visible; }
+.wire { fill: none; stroke: #9aa3c7; stroke-width: 1; opacity: 0.12; transition: opacity 0.12s, stroke 0.12s; }
+.wire-check, .wire-chain { opacity: 0; stroke-dasharray: 4 3; }
+.wire.is-dim { opacity: 0.03; }
+.wire.is-related { opacity: 1; stroke: var(--related); stroke-width: 2; }
+.wire.is-indirect { opacity: 0.35; stroke: var(--cat-check); stroke-dasharray: 3 4; }
+.wire.is-changed { opacity: 1; stroke: var(--changed); stroke-width: 2.2; }
+.wire.is-related.is-changed { stroke: var(--changed); }
+
+/* 状態クラス: focus（白枠）/ selected（黄色背景タグ）/ related（黄枠）/ indirect（橙点線）/ dim（薄く）/ changed（赤） */
+.node { cursor: pointer; transition: opacity 0.12s; }
+.node.is-dim { opacity: 0.28; }
+.node.is-related { box-shadow: 0 0 0 2px var(--related); }
+.node.is-indirect { box-shadow: 0 0 0 1px var(--cat-check); opacity: 0.85; }
+.node.is-changed { box-shadow: 0 0 0 2px var(--changed); }
+.node.is-related.is-changed { box-shadow: 0 0 0 2px var(--changed), 0 0 0 4px var(--related); }
+.node.is-focus { box-shadow: 0 0 0 3px var(--focus) !important; opacity: 1; }
+.node.is-selected { outline: 2px dashed var(--related); outline-offset: 3px; }
+
+/* 変更の伝播: 列ごとに遅らせて左→右へ流れるように見せる（偶奇で名前を変えて毎回再生させる） */
+@keyframes flash-a { 0% { background-color: var(--changed); } 100% { } }
+@keyframes flash-b { 0% { background-color: var(--changed); } 100% { } }
+.flash-a { animation: flash-a 0.9s ease-out both; }
+.flash-b { animation: flash-b 0.9s ease-out both; }
+.col-fields .flash-a, .col-fields .flash-b { animation-delay: 0s; }
+.col-fields .lbits .flash-a, .col-fields .lbits .flash-b { animation-delay: 0.08s; }
+.col-pack .flash-a, .col-pack .flash-b { animation-delay: 0.18s; }
+.col-raw .flash-a, .col-raw .flash-b { animation-delay: 0.3s; }
+.col-enc .flash-a, .col-enc .flash-b { animation-delay: 0.42s; }
+.col-char .flash-a, .col-char .flash-b { animation-delay: 0.54s; }
+@media (prefers-reduced-motion: reduce) { .flash-a, .flash-b { animation: none; } .wire, .node { transition: none; } }
+
+/* bit セル: 1 = カテゴリ色で塗る、0 = 枠のみ */
+.bit {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--bit); height: var(--bit); font-size: 11px; border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  color: color-mix(in srgb, var(--c) 70%, var(--text));
+  background: transparent; margin: 0 1px; user-select: none;
+}
+.bit.v1 { background: var(--c); color: #0b0b12; border-color: var(--c); font-weight: 600; }
+
+.field-group { border-left: 3px solid var(--c); padding: 2px 0 6px 10px; margin-bottom: 8px; }
+.group-label { font-size: 12px; color: var(--c); margin: 0 0 2px; font-weight: 600; letter-spacing: 0.05em; }
+.field-row { display: grid; grid-template-columns: 272px auto; align-items: center; column-gap: 16px; min-height: 30px; }
+.state-cell { display: flex; flex-wrap: wrap; min-width: 0; align-items: center; gap: 4px 8px; }
+.field-label { min-width: 100px; padding: 1px 4px; border-radius: 4px; font-size: 13px; }
+.field-editor { display: flex; align-items: center; gap: 6px; }
+.field-issue { flex-basis: 100%; color: var(--ng); font-size: 11px; }
+.lbits { display: flex; align-items: center; justify-content: flex-end; }
+.lbit-gap { margin-left: 6px; }
+.lbit-value { width: 46px; text-align: right; color: var(--muted); font-size: 12px; margin-left: 6px; }
+
+.name-slot { display: inline-flex; align-items: baseline; gap: 6px; background: #000; border: 2px solid var(--window-border); border-radius: 6px; padding: 0 8px; cursor: pointer; }
+.name-char { font-family: var(--font-dq); font-size: 18px; min-width: 1.2em; text-align: center; }
+.toggle { border-radius: 999px; padding: 0 12px; border: 1px solid var(--line); cursor: pointer; min-width: 56px; }
+.toggle.on { background: var(--cat-flags); color: #000; border-color: var(--cat-flags); font-weight: 600; }
+.toggle.off { background: transparent; color: var(--muted); }
+
+.check-cell { display: flex; flex-direction: column; gap: 2px; border: 2px solid var(--cat-check); border-radius: 6px; padding: 4px 8px; }
+.check-cell.ng { border-color: var(--ng); }
+.check-mismatch { color: var(--ng); font-size: 12px; }
+
+.byte-row { display: flex; align-items: center; gap: 8px; }
+.byte-label { width: 54px; font-size: 12px; color: var(--muted); padding: 1px 4px; border-radius: 4px; }
+.byte-body { display: flex; flex-direction: column; }
+.byte-bits { display: flex; }
+.byte-bits .bit { margin: 0; border-radius: 0; width: 22px; height: 20px; }
+.byte-bits .bit.seg-start { margin-left: 3px; }
+.byte-segs { display: flex; gap: 3px; font-size: 9px; line-height: 12px; }
+.seg { color: var(--c); border-top: 2px solid var(--c); text-align: center; white-space: nowrap; overflow: hidden; min-width: 0; }
+.byte-value { width: 34px; color: var(--muted); font-size: 12px; }
+
+.raw-row, .enc-row, .char-row { display: flex; align-items: center; gap: 6px; }
+.line-start { margin-top: 10px; }
+.row-index { width: 18px; text-align: right; font-size: 11px; color: var(--muted); }
+.raw-bits { display: flex; }
+.raw-bits .bit { margin: 0 0.5px; }
+.value-chip { display: inline-block; min-width: 30px; text-align: center; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; background: var(--panel-2); }
+.enc-chip { border-color: #555c80; }
+.enc-formula { font-size: 10px; min-width: 64px; }
+.pw-char { font-family: var(--font-dq); font-size: 20px; width: 30px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: #000; border: 1px solid #333; }
+
+/* ---------- インスペクタ（下部に固定し、hover だけに頼らずタップでも読めるように） ---------- */
+.inspector {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 16px; background: rgba(8, 8, 14, 0.96); border-top: 1px solid var(--line); min-height: 44px;
+}
+.inspector-body { flex: 1; min-width: 240px; }
+.inspector-legend { display: flex; gap: 10px; }
+.lg::before { content: ''; display: inline-block; width: 14px; height: 0; margin-right: 4px; vertical-align: middle; border-top: 2px solid; }
+.lg-related::before { border-color: var(--related); }
+.lg-indirect::before { border-color: var(--cat-check); border-top-style: dashed; }
+.lg-changed::before { border-color: var(--changed); }
+
+/* ---------- ポップオーバーとパレット ---------- */
+.popover { position: fixed; z-index: 50; background: #000; border: 3px solid var(--window-border); border-radius: 10px; padding: 10px; max-width: min(560px, calc(100vw - 16px)); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6); }
+.palette-head { font-size: 13px; margin-bottom: 6px; }
+.palette-grid { display: grid; gap: 3px; }
+.palette-blocks { display: flex; gap: 12px; flex-wrap: wrap; }
+.palette-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 38px; height: 44px; padding: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+.palette-cell:hover, .palette-cell:focus-visible { border-color: var(--text); }
+.palette-cell[aria-current='true'] { border-color: var(--related); box-shadow: inset 0 0 0 1px var(--related); }
+.palette-cell.password-only { opacity: 0.55; border-style: dashed; }
+.palette-cell.padding .palette-char { color: var(--muted); }
+.palette-char { font-family: var(--font-dq); font-size: 18px; line-height: 1.1; }
+.palette-code { font-size: 9px; color: var(--muted); }
+.palette-empty { min-width: 38px; }
+.palette-note { font-size: 11px; color: var(--muted); margin: 8px 0 0; max-width: 520px; }
+.char-detail { font-size: 12px; margin-bottom: 6px; color: var(--related); }
+
+/* ---------- Check Code Explorer ---------- */
+.explorer { max-width: 1280px; margin: 0 auto; padding: 16px; }
+.explorer-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+.explorer-head .panel-title { margin: 0; }
+.exp-bytes { display: flex; flex-wrap: wrap; gap: 8px; }
+.exp-byte { padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.exp-byte.current { border-color: var(--related); }
+.exp-byte.done { opacity: 0.6; }
+.exp-byte.excluded { opacity: 0.35; border-style: dashed; }
+.exp-byte-label { font-size: 11px; color: var(--muted); }
+.eb { display: inline-block; width: 13px; text-align: center; color: var(--muted); }
+.eb.v1 { color: var(--text); }
+.eb.used { opacity: 0.4; }
+.eb.hl { background: var(--related); color: #000; border-radius: 2px; }
+.explorer-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.explorer-controls input[type='range'] { flex: 1; min-width: 160px; }
+.explorer-body { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; }
+@media (max-width: 900px) { .explorer-body { grid-template-columns: 1fr; } }
+.step-dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 0; align-items: center; }
+.step-dl dt { color: var(--muted); }
+.step-dl dd { margin: 0; }
+.reg { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reg-label { width: 70px; color: var(--muted); font-size: 12px; }
+.rb { display: inline-block; width: 14px; text-align: center; color: var(--muted); }
+.rb.v1 { color: var(--text); font-weight: 600; }
+.rb.gap { margin-right: 6px; }
+.rb.lo.v1 { color: var(--cat-check); }
+.rb.hl { outline: 1px solid var(--related); border-radius: 2px; }
+.reg.mask .rb.v1 { color: var(--changed); }
+.reg.after .rb { background: color-mix(in srgb, var(--panel-2) 80%, transparent); }
+.final { margin-top: 12px; padding: 8px; border-radius: 6px; border: 1px solid; }
+.final.ok { border-color: var(--ok); }
+.final.ng { border-color: var(--ng); }
+.asm { margin: 0; padding-left: 22px; }
+.asm li { padding: 1px 4px; border-radius: 3px; }
+.asm li.ph-cond { background: color-mix(in srgb, var(--related) 10%, transparent); }
+.asm li.ph-xor { background: color-mix(in srgb, var(--changed) 12%, transparent); }
+.asm li.skipped { opacity: 0.35; text-decoration: line-through; }
+.asm-code { color: var(--text); }
+.step-table-wrap { max-height: 320px; overflow: auto; }
+.step-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.step-table th, .step-table td { padding: 2px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.step-table tbody tr { cursor: pointer; }
+.step-table tr.current { background: color-mix(in srgb, var(--related) 20%, transparent); }

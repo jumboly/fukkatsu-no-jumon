@@ -1,0 +1,29 @@
+{
+  "name": "fukkatsu-no-jumon",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "FC版ドラゴンクエストI 復活の呪文 可視化ビューア",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b",
+    "oracle:vectors": "node scripts/gen-oracle-vectors.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}
