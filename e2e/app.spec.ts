@@ -40,6 +40,20 @@ test('フラグを編集すると is-changed が付き、呪文が変わる', as
   await expect(page.locator('.pw-status')).toContainText('有効な呪文');
 });
 
+test('サンプル読み込み・初期化では差分を出さない（丸ごと差し替えなので）', async ({ page }) => {
+  await fieldRow(page, 'ゴーレム撃破').locator('.toggle').click();
+  await expect(page.locator('.is-changed').first()).toBeVisible();
+  await page.getByRole('combobox', { name: 'サンプル' }).selectOption({ index: 1 });
+  await expect(page.locator('.pw-status')).toContainText('呪文から decode');
+  await expect(page.locator('.is-changed')).toHaveCount(0);
+  await expect(page.locator('.controls')).toContainText('編集すると変化した経路が強調されます');
+  // 読み込んだ後の編集はまた差分が出る
+  await fieldRow(page, 'ゴーレム撃破').locator('.toggle').click();
+  await expect(inPipeline(page, 'field:golem')).toHaveClass(/\bis-changed\b/);
+  await page.getByRole('button', { name: '初期状態に戻す' }).click();
+  await expect(page.locator('.is-changed')).toHaveCount(0);
+});
+
 test('呪文を 1 文字変えると decode され、チェックコード不一致になる', async ({ page }) => {
   const last = page.locator('.password-panel .pw-cell').nth(19);
   const current = (await last.textContent())!;

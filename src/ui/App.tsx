@@ -55,8 +55,12 @@ export function App() {
   const scrollY = useRef(0);
   const password = snap.chars.join('');
 
-  const commit = useCallback((next: PipelineSnapshot) => {
-    setPrev(snap);
+  /**
+   * edit: 値を 1 つ変えた。変化した経路を見せるために直前の状態を残す。
+   * load: サンプル・貼り付け・初期化・URL で状態を丸ごと差し替えた。ほぼ全ノードが「変更」になって意味が無いので差分を捨てる。
+   */
+  const commit = useCallback((next: PipelineSnapshot, kind: 'edit' | 'load' = 'edit') => {
+    setPrev(kind === 'edit' ? snap : null);
     setSnap(next);
     setDiffVersion((v) => v + 1);
   }, [snap]);
@@ -70,7 +74,7 @@ export function App() {
   const onText = useCallback((text: string) => {
     const r = parsePassword(text);
     if (!r.ok) return r.error;
-    commit(decodeCodes(r.codes));
+    commit(decodeCodes(r.codes), 'load');
     return null;
   }, [commit]);
 
@@ -102,7 +106,7 @@ export function App() {
       setView(r.view);
       if (r.password && r.password !== cur.password) {
         const next = snapshotFromRoute(r);
-        if (next) cur.commit(next);
+        if (next) cur.commit(next, 'load');
       }
     };
     window.addEventListener('popstate', onPop);
@@ -166,7 +170,7 @@ export function App() {
                 {SAMPLES.map((s) => <option key={s.password} value={s.password}>{s.label}</option>)}
               </select>
             </label>
-            <button type="button" className="button" onClick={() => commit(encode(DEFAULT_STATE))}>初期状態に戻す</button>
+            <button type="button" className="button" onClick={() => commit(encode(DEFAULT_STATE), 'load')}>初期状態に戻す</button>
             <label className="control checkbox">
               <input type="checkbox" checked={showDiff} onChange={(e) => setShowDiff(e.target.checked)} />
               直前の編集で変わった経路を表示
