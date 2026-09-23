@@ -28,6 +28,7 @@ main ブランチへ push すると `.github/workflows/deploy.yml` がテスト 
 
 | パス | 内容 |
 |---|---|
+| `docs/TODO.md` | 残作業（仕様の未確定点・未実装・品質） |
 | `docs/research.md` | **Phase 0 調査結果**。bit 配置・文字表・チェックコード・導出ステータスの根拠と、資料間の食い違い |
 | `src/core/` | UI から独立した変換パイプライン（encode / decode / チェックコード / TraceGraph）。bit 配置は `layout.ts` の `FIELD_LAYOUT` だけが定義し、他はすべてそこから導く |
 | `src/ui/` | React による可視化。bit 演算や依存関係の推測は持たず、core の結果と TraceGraph を表示するだけ |
